@@ -47,6 +47,9 @@
         <origin xyz="0.15 0 0.075" rpy="0 0 0"/>
     </xacro:inertial_box>
     </link>
+    <gazebo refercence="chassis">
+        <material >Gazebo/White</material>
+    </gazebo>
 
     <!-- Tạo ra một joint có tên là left_wheel_joint; joint này kết nối base_link với left_wheel -->
     <joint name="left_wheel_joint" type="continuous">
@@ -71,7 +74,9 @@
           <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
     </link>
-
+      <gazebo refercence="left_wheel">
+        <material >Gazebo/Blue</material>
+    </gazebo>
     
     <!-- Tạo ra một joint có tên là right_wheel_joint; joint này kết nối base_link với right_wheel -->
     <joint name="right_wheel_joint" type="continuous">
@@ -96,6 +101,9 @@
           <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:inertial_cylinder>
     </link>
+      <gazebo refercence="right_wheel">
+        <material >Gazebo/Blue</material>
+    </gazebo>
 
     <!-- caster_wheel -->
     <joint name="caster_wheel_joint" type="fixed">
@@ -119,4 +127,7 @@
             <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:inertial_sphere>
     </link>
+    <gazebo refercence="caster_wheel">
+        <material >Gazebo/Black</material>
+    </gazebo>
 </robot>
