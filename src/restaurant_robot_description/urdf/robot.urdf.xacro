@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+  robot.urdf.xacro
+  Package: restaurant_robot_description
+  Description: Main URDF/Xacro file - includes all robot components:
+               1. robot_core.xacro  : Mechanical structure (chassis, wheels, caster)
+               2. sensors.xacro     : Sensor frames (LiDAR, IMU)
+               3. gazebo.xacro      : Gazebo Harmonic plugins (diff_drive, lidar, imu)
+  
+  Usage:
+    xacro robot.urdf.xacro > robot.urdf
+    
+  ROS Version: ROS 2 Jazzy Jalisco
+-->
+<robot name="restaurant_robot"
+       xmlns:xacro="http://www.ros.org/wiki/xacro"
+       xmlns:gz="http://gazebosim.org/schema">
+
+    <!-- Mechanical structure: chassis, wheels, caster -->
+    <xacro:include filename="$(find restaurant_robot_description)/urdf/robot_core.xacro"/>
+
+    <!-- Sensor frames: LiDAR, IMU -->
+    <xacro:include filename="$(find restaurant_robot_description)/urdf/sensors.xacro"/>
+
+    <!-- Gazebo Harmonic plugins: diff_drive, joint_states, lidar, imu -->
+    <xacro:include filename="$(find restaurant_robot_description)/urdf/gazebo.xacro"/>
+
+</robot>

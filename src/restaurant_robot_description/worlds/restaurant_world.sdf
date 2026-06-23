@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="grand_restaurant">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 15 0 0 0</pose>
+      <diffuse>1.0 0.95 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.2 0.2 -1.0</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision"><geometry><plane><normal>0 0 1</normal><size>30 20</size></plane></geometry></collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>30 20</size></plane></geometry>
+          <material><ambient>0.7 0.7 0.65 1</ambient><diffuse>0.7 0.7 0.65 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="walls">
+      <static>true</static>
+      <link name="north"><pose>0 10 1.5 0 0 0</pose><collision name="c"><geometry><box><size>30 0.2 3</size></box></geometry></collision><visual name="v"><geometry><box><size>30 0.2 3</size></box></geometry></visual></link>
+      <link name="south"><pose>0 -10 1.5 0 0 0</pose><collision name="c"><geometry><box><size>30 0.2 3</size></box></geometry></collision><visual name="v"><geometry><box><size>30 0.2 3</size></box></geometry></visual></link>
+      <link name="east"><pose>15 0 1.5 0 0 1.5708</pose><collision name="c"><geometry><box><size>20 0.2 3</size></box></geometry></collision><visual name="v"><geometry><box><size>20 0.2 3</size></box></geometry></visual></link>
+      <link name="west"><pose>-15 0 1.5 0 0 1.5708</pose><collision name="c"><geometry><box><size>20 0.2 3</size></box></geometry></collision><visual name="v"><geometry><box><size>20 0.2 3</size></box></geometry></visual></link>
+    </model>
+
+    <model name="left_long_tables">
+      <static>true</static>
+      <pose>-8 3 0.4 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>12 1.5 0.8</size></box></geometry></collision>
+        <visual name="v">
+          <geometry><box><size>12 1.5 0.8</size></box></geometry>
+          <material><ambient>0.95 0.95 0.95 1</ambient></material> </visual>
+      </link>
+    </model>
+    
+    <model name="left_long_tables_2">
+      <static>true</static>
+      <pose>8 3 0.4 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>12 1.5 0.8</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>12 1.5 0.8</size></box></geometry><material><ambient>0.95 0.95 0.95 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="right_long_tables">
+      <static>true</static>
+      <pose>-8 -3 0.4 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>12 1.5 0.8</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>12 1.5 0.8</size></box></geometry><material><ambient>0.95 0.95 0.95 1</ambient></material></visual>
+      </link>
+    </model>
+    
+    <model name="right_long_tables_2">
+      <static>true</static>
+      <pose>8 -3 0.4 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="c"><geometry><box><size>12 1.5 0.8</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>12 1.5 0.8</size></box></geometry><material><ambient>0.95 0.95 0.95 1</ambient></material></visual>
+      </link>
+    </model>
+
+    <model name="center_trees_pillars">
+      <static>true</static>
+      <link name="pillar_1">
+        <pose>-5 0 1.5 0 0 0</pose>
+        <collision name="c"><geometry><cylinder><radius>0.8</radius><length>3</length></cylinder></geometry></collision>
+        <visual name="v"><geometry><cylinder><radius>0.8</radius><length>3</length></cylinder></geometry><material><ambient>0.2 0.5 0.2 1</ambient></material></visual>
+      </link>
+      <link name="pillar_2">
+        <pose>5 0 1.5 0 0 0</pose>
+        <collision name="c"><geometry><cylinder><radius>0.8</radius><length>3</length></cylinder></geometry></collision>
+        <visual name="v"><geometry><cylinder><radius>0.8</radius><length>3</length></cylinder></geometry><material><ambient>0.2 0.5 0.2 1</ambient></material></visual>
+      </link>
+      <link name="center_table_1">
+        <pose>0 0 0.4 0 0 0</pose>
+        <collision name="c"><geometry><box><size>2 2 0.8</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>2 2 0.8</size></box></geometry><material><ambient>0.9 0.9 0.9 1</ambient></material></visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

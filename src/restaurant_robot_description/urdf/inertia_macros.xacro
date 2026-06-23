@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!--
+  inertia_macros.xacro
+  Package: restaurant_robot_description
+  Description: Reusable xacro macros for computing physically accurate
+               inertia tensors for primitive geometries.
+  
+  Formulas used:
+    Box:      Ixx = (1/12)*m*(y^2+z^2), Iyy = (1/12)*m*(x^2+z^2), Izz = (1/12)*m*(x^2+y^2)
+    Cylinder: Ixx = Iyy = (1/12)*m*(3*r^2+h^2), Izz = (1/2)*m*r^2
+    Sphere:   Ixx = Iyy = Izz = (2/5)*m*r^2
+  
+  ROS Version: ROS 2 Jazzy Jalisco
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- ============================================================
+         MACRO: Inertia for a solid box
+         Parameters:
+           mass - mass in kg
+           x    - length along X axis (meters)
+           y    - length along Y axis (meters)  
+           z    - length along Z axis (meters)
+         ============================================================ -->
+    <xacro:macro name="inertial_box" params="mass x y z *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}"/>
+            <inertia ixx="${(1/12) * mass * (y*y + z*z)}" ixy="0.0" ixz="0.0"
+                     iyy="${(1/12) * mass * (x*x + z*z)}" iyz="0.0"
+                     izz="${(1/12) * mass * (x*x + y*y)}"/>
+        </inertial>
+    </xacro:macro>
+
+    <!-- ============================================================
+         MACRO: Inertia for a solid cylinder (aligned along Z axis)
+         Parameters:
+           mass   - mass in kg
+           radius - radius in meters
+           length - height along Z axis (meters)
+         ============================================================ -->
+    <xacro:macro name="inertial_cylinder" params="mass radius length *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}"/>
+            <inertia ixx="${(1/12) * mass * (3 * radius * radius + length * length)}" ixy="0.0" ixz="0.0"
+                     iyy="${(1/12) * mass * (3 * radius * radius + length * length)}" iyz="0.0"
+                     izz="${(1/2) * mass * radius * radius}"/>
+        </inertial>
+    </xacro:macro>
+
+    <!-- ============================================================
+         MACRO: Inertia for a solid sphere
+         Parameters:
+           mass   - mass in kg
+           radius - radius in meters
+         ============================================================ -->
+    <xacro:macro name="inertial_sphere" params="mass radius *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}"/>
+            <inertia ixx="${(2/5) * mass * radius * radius}" ixy="0.0" ixz="0.0"
+                     iyy="${(2/5) * mass * radius * radius}" iyz="0.0"
+                     izz="${(2/5) * mass * radius * radius}"/>
+        </inertial>
+    </xacro:macro>
+
+</robot>

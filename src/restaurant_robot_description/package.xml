@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!--
+  package.xml
+  Package: restaurant_robot_description
+  Description: URDF/Xacro description package for the restaurant service robot.
+               Rectangular chassis (320x260x180mm), differential drive
+               (2 rear drive wheels + 1 front caster), 2D LiDAR, IMU.
+               Compatible with Gazebo Harmonic and ROS 2 Jazzy Jalisco.
+-->
+<package format="3">
+  <name>restaurant_robot_description</name>
+  <version>2.0.0</version>
+  <description>
+    URDF/Xacro description for the restaurant service robot.
+    Differential drive with 2 rear wheels + front caster.
+    Includes LiDAR and IMU sensors for SLAM and navigation.
+    Gazebo Harmonic + ROS 2 Jazzy Jalisco.
+  </description>
+
+  <maintainer email="robot@restaurant.com">Restaurant Robot Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Build tool -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- URDF/Xacro processing -->
+  <depend>urdf</depend>
+  <depend>xacro</depend>
+
+  <!-- Launch system -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <!-- Robot state management -->
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
+
+  <!-- Gazebo Harmonic integration (NOT Gazebo Classic) -->
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_interfaces</exec_depend>
+
+  <!-- Visualization -->
+  <exec_depend>rviz2</exec_depend>
+
+  <!-- Navigation -->
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_amcl</exec_depend>
+  <exec_depend>nav2_controller</exec_depend>
+  <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>nav2_behaviors</exec_depend>
+  <exec_depend>nav2_bt_navigator</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+
+  <!-- Testing -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<!--
+  gazebo.xacro
+  Package: restaurant_robot_description
+  Description: Gazebo Harmonic plugin configuration.
+               - Differential drive controller
+               - Joint state publisher
+               - GPU LiDAR sensor
+               - IMU sensor
+  ROS Version: ROS 2 Jazzy Jalisco
+  Gazebo Version: Harmonic (gz-sim8)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"
+       xmlns:gz="http://gazebosim.org/schema">
+
+    <!-- ============================================================
+         DIFFERENTIAL DRIVE PLUGIN
+         Controls left/right wheel joints via /cmd_vel
+         Publishes odometry on /odom and TF odom→base_footprint
+         ============================================================ -->
+    <gazebo>
+        <plugin filename="gz-sim-diff-drive-system"
+                name="gz::sim::systems::DiffDrive">
+            <left_joint>left_wheel_joint</left_joint>
+            <right_joint>right_wheel_joint</right_joint>
+            <wheel_separation>0.350</wheel_separation>
+            <wheel_radius>0.05</wheel_radius>
+            <max_linear_acceleration>1.0</max_linear_acceleration>
+            <max_angular_acceleration>2.0</max_angular_acceleration>
+            <max_linear_deceleration>2.0</max_linear_deceleration>
+            <max_angular_deceleration>4.0</max_angular_deceleration>
+            <topic>cmd_vel</topic>
+            <odom_topic>odom</odom_topic>
+            <tf_topic>tf</tf_topic>
+            <frame_id>odom</frame_id>
+            <child_frame_id>base_footprint</child_frame_id>
+            <odom_publisher_frequency>50</odom_publisher_frequency>
+            <!-- Ghi chú: gz-sim-diff-drive-system (Gazebo Harmonic) không hỗ trợ
+                 covariance params. AMCL dùng alpha1-alpha5 để model odom noise. -->
+        </plugin>
+    </gazebo>
+
+    <!-- ============================================================
+         JOINT STATE PUBLISHER PLUGIN
+         Publishes wheel joint positions/velocities for robot_state_publisher
+         ============================================================ -->
+    <gazebo>
+        <plugin filename="gz-sim-joint-state-publisher-system"
+                name="gz::sim::systems::JointStatePublisher">
+            <topic>joint_states</topic>
+            <joint_name>left_wheel_joint</joint_name>
+            <joint_name>right_wheel_joint</joint_name>
+        </plugin>
+    </gazebo>
+
+    <!-- ============================================================
+         GPU LIDAR SENSOR PLUGIN
+         360° 2D scan, RPLidar A1 style
+         Published on /scan in Gazebo, bridged to ROS2 /scan
+         ============================================================ -->
+    <gazebo reference="laser_frame">
+        <sensor name="laser" type="gpu_lidar">
+            <gz:frame_id>laser_frame</gz:frame_id>
+            <pose>0 0 0 0 0 0</pose>
+            <topic>/scan</topic>
+            <update_rate>10</update_rate>
+            <lidar>
+                <scan>
+                    <horizontal>
+                        <samples>360</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-3.14159265</min_angle>
+                        <max_angle>3.14159265</max_angle>
+                    </horizontal>
+                </scan>
+                <range>
+                    <min>0.15</min>
+                    <max>12.0</max>
+                    <resolution>0.01</resolution>
+                </range>
+                <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.005</stddev>
+                </noise>
+            </lidar>
+            <always_on>true</always_on>
+            <visualize>false</visualize>
+        </sensor>
+    </gazebo>
+
+    <!-- ============================================================
+         IMU SENSOR PLUGIN
+         Published on /imu in Gazebo, bridged to ROS2 /imu
+         ============================================================ -->
+    <gazebo reference="imu_link">
+        <sensor name="imu_sensor" type="imu">
+            <gz:frame_id>imu_link</gz:frame_id>
+            <topic>/imu</topic>
+            <update_rate>100</update_rate>
+            <imu>
+                <angular_velocity>
+                    <x><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.0002</stddev>
+                    </noise></x>
+                    <y><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.0002</stddev>
+                    </noise></y>
+                    <z><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.0002</stddev>
+                    </noise></z>
+                </angular_velocity>
+                <linear_acceleration>
+                    <x><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.017</stddev>
+                    </noise></x>
+                    <y><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.017</stddev>
+                    </noise></y>
+                    <z><noise type="gaussian">
+                        <mean>0.0</mean><stddev>0.017</stddev>
+                    </noise></z>
+                </linear_acceleration>
+            </imu>
+            <always_on>true</always_on>
+            <visualize>false</visualize>
+        </sensor>
+    </gazebo>
+</robot>

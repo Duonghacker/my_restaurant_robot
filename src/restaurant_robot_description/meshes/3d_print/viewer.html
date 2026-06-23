@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Robot Chassis — 3D Viewer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0a0c12;--surface:#12161f;--surface2:#1a2030;--border:#252d3d;--accent:#4f8ef7;--green:#34d399;--yellow:#fbbf24;--text:#e2e8f0;--muted:#64748b;--radius:10px}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden}
+    #app{display:grid;grid-template-columns:250px 1fr;grid-template-rows:52px 1fr;height:100vh}
+    #topbar{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--surface);border-bottom:1px solid var(--border)}
+    .logo{font-size:16px;font-weight:700;background:linear-gradient(135deg,#4f8ef7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .badge{margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.3)}
+    #sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:12px 10px;gap:4px;overflow-y:auto}
+    .sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:10px 8px 4px}
+    .part-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text);cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;width:100%;text-align:left}
+    .part-btn:hover{background:var(--surface2);border-color:var(--border)}
+    .part-btn.active{background:rgba(79,142,247,.12);border-color:var(--accent)}
+    .part-btn .ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .part-btn .dim{font-size:10px;color:var(--muted);margin-top:1px}
+    hr.div{border:none;border-top:1px solid var(--border);margin:6px 0}
+    .tips{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.2);border-radius:8px;padding:10px 12px;margin:6px 0;font-size:11px;line-height:1.6;color:#94a3b8}
+    .tips b{color:var(--accent)}
+    #viewport{position:relative;overflow:hidden;background:var(--bg)}
+    #canvas{display:block;width:100%;height:100%}
+    #loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:14px;z-index:30}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #loading p{color:var(--muted);font-size:13px}
+    #info{position:absolute;bottom:18px;right:18px;background:rgba(18,22,31,.93);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:11px;backdrop-filter:blur(14px);min-width:190px}
+    #info h3{font-size:13px;font-weight:600;margin-bottom:7px;color:#fff}
+    .ir{display:flex;justify-content:space-between;gap:14px;margin:3px 0}
+    .ir .lbl{color:var(--muted)}.ir .val{color:var(--green);font-family:monospace;font-weight:500}
+    #hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;gap:14px;background:rgba(18,22,31,.88);border:1px solid var(--border);border-radius:30px;padding:5px 16px;font-size:11px;color:var(--muted);backdrop-filter:blur(8px);white-space:nowrap}
+    #hint span b{color:var(--text)}
+    #toolbar{position:absolute;top:12px;right:16px;display:flex;gap:6px}
+    .tbtn{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:rgba(18,22,31,.88);color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;backdrop-filter:blur(8px);user-select:none}
+    .tbtn:hover{border-color:var(--accent);color:var(--accent)}
+    .tbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.15)}
+    .color-row{display:flex;gap:6px;padding:4px 8px;flex-wrap:wrap}
+    .clr-btn{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s}
+    .clr-btn:hover{transform:scale(1.2)}
+    .clr-btn.sel{border-color:white}
+  </style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="logo">🤖 Robot Prototype Chassis</div>
+    <span style="font-size:11px;color:var(--muted)">3D Print Ready — 200×190mm</span>
+    <div class="badge">V3.3</div>
+  </header>
+
+  <aside id="sidebar">
+    <div class="sec">🔧 Prototype</div>
+
+    <button class="part-btn" id="btn-asm" onclick="loadAssembly()">
+      <div class="ico" style="background:rgba(251,191,36,.15)">🛠️</div>
+      <div><div>Lắp ráp hoàn chỉnh</div><div class="dim">Khung + Linh kiện</div></div>
+    </button>
+
+    <button class="part-btn active" id="btn-base" onclick="loadSTL('prototype_base.stl','Tầng 1 — Base Plate','Gá Motor + Caster + Lỗ trụ đồng','200×190×5 mm',0x34d399,this)">
+      <div class="ico" style="background:rgba(52,211,153,.15)">🟩</div>
+      <div><div>Tầng 1 — Base Plate</div><div class="dim">200×190 mm — PETG 25%</div></div>
+    </button>
+
+    <button class="part-btn" id="btn-top" onclick="loadSTL('prototype_top.stl','Tầng 2 — Top Plate','RPi4 + LiDAR mount','200×190×5 mm',0x4f8ef7,this)">
+      <div class="ico" style="background:rgba(79,142,247,.15)">🔵</div>
+      <div><div>Tầng 2 — Top Plate</div><div class="dim">200×190 mm — PETG</div></div>
+    </button>
+
+    <button class="part-btn" id="btn-bumper" onclick="loadSTL('prototype_bumper.stl','Cản trước — Bumper','Ngàm gắn mũi xe khí động học','190×40×40 mm',0x64748b,this)">
+      <div class="ico" style="background:rgba(100,116,139,.15)">🏎️</div>
+      <div><div>Cản trước — Bumper</div><div class="dim">Không cần support</div></div>
+    </button>
+
+    <hr class="div">
+    <div class="sec">Màu hiển thị</div>
+    <div class="color-row">
+      <div class="clr-btn" style="background:#4f8ef7" onclick="setColor(0x4f8ef7,this)"></div>
+      <div class="clr-btn sel" style="background:#34d399" onclick="setColor(0x34d399,this)"></div>
+      <div class="clr-btn" style="background:#fbbf24" onclick="setColor(0xfbbf24,this)"></div>
+      <div class="clr-btn" style="background:#f87171" onclick="setColor(0xf87171,this)"></div>
+      <div class="clr-btn" style="background:#e2e8f0" onclick="setColor(0xe2e8f0,this)"></div>
+      <div class="clr-btn" style="background:#a78bfa" onclick="setColor(0xa78bfa,this)"></div>
+    </div>
+
+    <hr class="div">
+    <div class="tips">
+      <b>Linh kiện lắp ráp:</b><br>
+      🟩 Base Plate (đáy)<br>
+      🔵 Top Plate (nắp)<br>
+      🏎️ Front Bumper (cản trước)<br>
+      🟡 Trụ đồng M3×55mm<br>
+      ⚙️ 2× Motor GA25-370<br>
+      ⚫ 2× Bánh lục giác 65mm<br>
+      🔘 Caster M4<br>
+      💚 Raspberry Pi 4<br>
+      🟢 STM32 + L298N<br>
+      🟣 LiDAR RPLidar A1
+    </div>
+
+    <hr class="div">
+    <div class="tips" style="font-size:10px">
+      📁 meshes/3d_print/<br>
+      • <b style="color:#34d399">prototype_base.stl</b><br>
+      • <b style="color:#4f8ef7">prototype_top.stl</b><br>
+      • <b style="color:#64748b">prototype_bumper.stl</b>
+    </div>
+  </aside>
+
+  <main id="viewport">
+    <div id="loading">
+      <div class="spinner"></div>
+      <p id="ltxt">Đang khởi tạo Three.js…</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div id="hint">
+      <span>🖱️ <b>Kéo</b> xoay</span>
+      <span>🖱️ <b>Scroll</b> zoom</span>
+      <span>🖱️ <b>Phải</b> pan</span>
+    </div>
+    <div id="toolbar">
+      <div class="tbtn on" id="tgrid" title="Grid" onclick="toggleGrid()">⊞</div>
+      <div class="tbtn" id="twire" title="Wireframe" onclick="toggleWire()">◫</div>
+      <div class="tbtn" id="tflat" title="Flat shading" onclick="toggleFlat()">◈</div>
+      <div class="tbtn" title="Reset camera" onclick="resetCam()">⌖</div>
+    </div>
+    <div id="info">
+      <h3 id="iname">—</h3>
+      <div class="ir"><span class="lbl">Mô tả</span><span class="val" id="idesc">—</span></div>
+      <div class="ir"><span class="lbl">Kích thước</span><span class="val" id="idim">—</span></div>
+      <div class="ir"><span class="lbl">Tam giác</span><span class="val" id="ifaces">—</span></div>
+      <div class="ir"><span class="lbl">Vertices</span><span class="val" id="iverts">—</span></div>
+    </div>
+  </main>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"./three/build/three.min.js","three/addons/":"./three/addons/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+// ── Renderer ──
+const canvas   = document.getElementById('canvas');
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.setClearColor(0x0a0c12);
+
+// ── Scene ──
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x0a0c12, 900, 2500);
+
+let grid = new THREE.GridHelper(800, 24, 0x252d3d, 0x1a2030);
+scene.add(grid);
+
+const gnd = new THREE.Mesh(
+  new THREE.PlaneGeometry(3000, 3000),
+  new THREE.MeshStandardMaterial({ color: 0x0a0c12, roughness: 1 })
+);
+gnd.rotation.x = -Math.PI/2; gnd.receiveShadow = true; scene.add(gnd);
+
+// ── Camera ──
+const camera = new THREE.PerspectiveCamera(42, 1, 1, 5000);
+camera.position.set(300, 250, 400);
+
+// ── Controls ──
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.minDistance = 50; controls.maxDistance = 2500;
+
+// ── Lights ──
+scene.add(new THREE.AmbientLight(0x334466, 2.0));
+const sun = new THREE.DirectionalLight(0xffffff, 4);
+sun.position.set(400, 700, 400); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x4488ff, 1.5);
+fill.position.set(-400, 200, -300); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xcc88ff, 0.9);
+rim.position.set(0, -200, -500); scene.add(rim);
+
+// ── Resize ──
+new ResizeObserver(() => {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}).observe(viewport);
+
+// ── State ──
+let mesh = null, wireMesh = null, asmGroup = null;
+let showGrid = true, showWire = false, showFlat = false;
+let activeColor = 0x34d399;
+const loader = new STLLoader();
+
+function setInfo(name, desc, dim) {
+  document.getElementById('iname').textContent = name;
+  document.getElementById('idesc').textContent = desc;
+  document.getElementById('idim').textContent  = dim;
+  document.getElementById('ifaces').textContent = '…';
+  document.getElementById('iverts').textContent = '…';
+}
+
+function clearScene() {
+  if (mesh)     { scene.remove(mesh);     mesh.geometry.dispose();     mesh = null; }
+  if (wireMesh) { scene.remove(wireMesh); wireMesh.geometry.dispose(); wireMesh = null; }
+  if (asmGroup) { scene.remove(asmGroup); asmGroup = null; }
+}
+
+function fitCamera(obj) {
+  const box  = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3()).length();
+  const ctr  = box.getCenter(new THREE.Vector3());
+  camera.position.set(ctr.x + size*0.8, ctr.y + size*0.65, ctr.z + size*0.9);
+  controls.target.copy(ctr); controls.update();
+}
+
+// ── Load single STL ──
+window.loadSTL = function(file, name, desc, dim, color, btn) {
+  document.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  activeColor = color;
+  setInfo(name, desc, dim);
+  clearScene();
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('ltxt').textContent = `Đang tải ${file}…`;
+
+  loader.load(file, geo => {
+    geo.computeVertexNormals();
+    geo.rotateX(-Math.PI/2);
+    const box = new THREE.Box3().setFromObject(new THREE.Mesh(geo));
+    const c = new THREE.Vector3(); box.getCenter(c);
+    geo.translate(-c.x, -box.min.y, -c.z);
+
+    const mat = new THREE.MeshStandardMaterial({ color: activeColor, roughness: 0.4, metalness: 0.1, flatShading: showFlat });
+    mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+
+    const wMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.06 });
+    wireMesh = new THREE.Mesh(geo, wMat);
+    wireMesh.visible = showWire;
+    scene.add(wireMesh);
+
+    fitCamera(mesh);
+    const faces = geo.index ? geo.index.count/3 : geo.attributes.position.count/3;
+    document.getElementById('ifaces').textContent = Math.round(faces).toLocaleString();
+    document.getElementById('iverts').textContent = geo.attributes.position.count.toLocaleString();
+    document.getElementById('loading').style.display = 'none';
+  },
+  xhr => {
+    if (xhr.total) document.getElementById('ltxt').textContent = `Đang tải… ${Math.round(xhr.loaded/xhr.total*100)}%`;
+  },
+  err => {
+    document.getElementById('ltxt').textContent = '❌ Lỗi: ' + err.message;
+    console.error(err);
+  });
+};
+
+// ── Coordinate mapping: SCAD(sx,sy,sz) → Three.js(sx-100, sz, 95-sy)
+// After geo.rotateX(-PI/2) and centering: plate X:[-100,100], Y:[0,5], Z:[-95,95]
+function s2t(sx, sy, sz) { return [sx - 100, sz, 95 - sy]; }
+
+// Vertical cylinder (SCAD Z axis = Three.js Y axis)
+function addCylV(g, sx, sy, sz0, sz1, r, color) {
+  const [tx,,tz] = s2t(sx, sy, 0);
+  const h = sz1 - sz0;
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 32), mat);
+  m.position.set(tx, sz0 + h/2, tz);
+  m.castShadow = true; g.add(m);
+}
+
+// Horizontal cylinder along SCAD Y axis = Three.js Z axis (rotation.x = PI/2)
+function addCylH(g, sx, sy_center, sz_center, r, h, color) {
+  const [tx,,] = s2t(sx, 0, 0);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 32), mat);
+  m.rotation.x = Math.PI / 2;
+  m.position.set(tx, sz_center, 95 - sy_center);
+  m.castShadow = true; g.add(m);
+}
+
+// Box: sx/sy = SCAD XY center, sz_bot = SCAD Z bottom
+function addBoxS(g, sx, sy, sz_bot, w, d, h, color, alpha = 1) {
+  const [tx,,tz] = s2t(sx, sy, 0);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.6, transparent: alpha < 1, opacity: alpha });
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(tx, sz_bot + h/2, tz);
+  m.castShadow = true; g.add(m);
+}
+
+function addLabel(g, txt, sx, sy, sz) {
+  const [tx,,tz] = s2t(sx, sy, 0);
+  const c2 = document.createElement('canvas'); c2.width = 256; c2.height = 64;
+  const ctx = c2.getContext('2d');
+  ctx.fillStyle = 'rgba(10,12,18,0.75)'; ctx.fillRect(0, 0, 256, 64);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 26px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, 128, 32);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c2), transparent: true }));
+  sp.scale.set(40, 10, 1); sp.position.set(tx, sz + 8, tz);
+  g.add(sp);
+}
+
+// ── Load full assembly ──
+
+// ── Load full assembly ──
+window.loadAssembly = function() {
+  document.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-asm').classList.add('active');
+  setInfo('Lắp Ráp Hoàn Chỉnh', 'Khung xe + Linh kiện điện tử', '200×190×~120 mm');
+  clearScene();
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('ltxt').textContent = 'Đang tải khung xe…';
+
+  const asm = new THREE.Group();
+  asmGroup = asm;
+  scene.add(asm);
+
+  let done = 0;
+  const check = () => {
+    done++;
+    if (done < 3) return;
+    document.getElementById('ltxt').textContent = 'Đang lắp linh kiện…';
+
+    // ── Vật lý: ground=0, shaft/wheel_center=32.5 ──
+    // Base plate (Tầng 1): Đáy Z=50.5, Mặt phẳng Z=55.5
+    // Top plate (Tầng 2): Đáy Z=110.5, Mặt trên Z=115.5
+
+    // ── 4 trụ đồng M3×55mm (vàng) ──
+    [[15,15],[185,15],[15,175],[185,175]].forEach(([sx,sy]) => {
+      addCylV(asm, sx, sy, 55.5, 110.5, 2.5, 0xfbbf24);
+    });
+
+    // ── Motor GA25-370: Ø24.4mm (r=12.2), thân dài 31mm, encoder 13mm ──
+    // Vách gá ở Y_scad = 0 và 190. Thân motor hướng vào trong khung.
+    addCylH(asm, 67, 15.5, 32.5, 12.2, 31, 0x9ca3af);  // thân trái (vào trong)
+    addCylH(asm, 67, 37.5, 32.5, 12.2, 13, 0xb0361e);  // encoder trái
+    addCylH(asm, 67, 174.5, 32.5, 12.2, 31, 0x9ca3af); // thân phải (vào trong)
+    addCylH(asm, 67, 152.5, 32.5, 12.2, 13, 0xb0361e); // encoder phải
+
+    // ── Bánh xe lục giác 65mm (r=32.5, dày 26mm) ──
+    // Bánh xe gắn vào trục, nằm ngoài khung xe.
+    addCylH(asm, 67, -13, 32.5, 32.5, 26, 0x1f2937);   // bánh trái (ra ngoài)
+    addCylH(asm, 67, 203, 32.5, 32.5, 26, 0x1f2937);   // bánh phải (ra ngoài)
+
+    // ── Bánh Đa Hướng (Cao 33mm) ──
+    // Ụ nâng của Base plate kết thúc tại Y=33. Bánh xe chạm đất Y=0.
+    addBoxS(asm, 160, 95, 31, 38, 32, 2, 0x94a3b8);  // Đế kim loại (38x32mm)
+    addCylV(asm, 160, 95, 12.5, 31, 10, 0x64748b);   // Cùm giữ bánh
+    addCylH(asm, 160, 95, 12.5, 12.5, 13, 0xf8fafc); // Bánh xe nilon trắng (Ø25mm)
+
+    // ── Tầng 1: Electronics (ngồi trên mặt phẳng Y=55.5) ──
+    // STM32 (X=100, Z=45)
+    addBoxS(asm, 100, 45, 55.5, 48, 36, 1.6, 0x10b981); // PCB xanh lá
+    addBoxS(asm, 100, 45, 57.1, 12, 12, 1.5, 0x111827); // Chip ARM đen
+    addBoxS(asm,  83, 45, 57.1,  4, 25, 4.0, 0xfacc15); // Hàng Pin trái (vàng)
+    addBoxS(asm, 117, 45, 57.1,  4, 25, 4.0, 0xfacc15); // Hàng Pin phải (vàng)
+    addLabel(asm, 'STM32', 100, 45, 65);
+
+    // L298N (X=100, Z=145)
+    addBoxS(asm, 100, 145, 55.5, 43, 43, 1.6, 0xef4444); // PCB đỏ
+    addBoxS(asm, 100, 130, 57.1, 28, 12, 18, 0x9ca3af);  // Tản nhiệt nhôm lớn
+    addCylV(asm,  88, 155, 57.1, 69.1, 6, 0x111827);     // Tụ điện 1
+    addCylV(asm, 100, 155, 57.1, 69.1, 6, 0x111827);     // Tụ điện 2
+    addBoxS(asm, 115, 145, 57.1, 10, 20,  8, 0x3b82f6);  // Domino cắm dây xanh dương
+    addLabel(asm, 'L298N', 100, 145, 80);
+
+    // Pin LiPo 12V (X=148, Z=95)
+    addBoxS(asm, 148, 95, 55.5, 95, 32, 22, 0x2563eb); // Cell pin bọc xanh
+    addBoxS(asm, 100, 92, 65.5,  5,  2,  2, 0xef4444); // Dây đỏ
+    addBoxS(asm, 100, 98, 65.5,  5,  2,  2, 0x111827); // Dây đen
+    addLabel(asm, 'LiPo', 148, 95, 88);
+
+    // ── Tầng 2: Electronics (ngồi trên nắp Y=115.5) ──
+    // Raspberry Pi 4 (X=30, Z=95, xoay dọc theo X)
+    addBoxS(asm, 30,  95, 115.5, 56, 85, 1.6, 0x16a34a); // PCB xanh
+    addBoxS(asm, 30,  95, 117.1, 14, 14, 1.5, 0x111827); // Broadcom CPU
+    addBoxS(asm, 15, 130, 117.1, 14, 16, 12, 0xd1d5db);  // Cổng Ethernet mạ kim loại
+    addBoxS(asm, 32, 130, 117.1, 12, 15, 12, 0xd1d5db);  // Cổng USB 3.0
+    addBoxS(asm, 48, 130, 117.1, 12, 15, 12, 0xd1d5db);  // Cổng USB 2.0
+    addBoxS(asm,  6,  95, 117.1,  4, 52,  6, 0x111827);  // GPIO Header đen
+    addLabel(asm, 'RPi 4', 30, 95, 140);
+
+    // LiDAR RPLidar A1M8 (X=155, Z=95)
+    addCylV(asm, 155, 95, 115.5, 135.5, 35, 0x1f2937);   // Đế trụ đen nhám
+    addBoxS(asm, 135, 95, 115.5, 25, 35, 18, 0x1f2937);  // Khối gắn motor phụ (chĩa về sau)
+    addCylV(asm, 155, 95, 135.5, 150.5, 28, 0x374151);   // Trụ quay (Scanner)
+    addBoxS(asm, 175, 95, 140.0, 10,  6,  5, 0xef4444);  // Mắt laser phát sáng đỏ (hướng ra trước)
+    addLabel(asm, 'LiDAR', 155, 95, 175);
+
+    document.getElementById('ifaces').textContent = '—';
+    document.getElementById('iverts').textContent = '—';
+    document.getElementById('loading').style.display = 'none';
+    fitCamera(asm);
+  };
+
+  // ── Load Base Plate (Tầng 1) ──
+  // Dùng Date.now() để bypass trình duyệt cache file cũ
+  loader.load('prototype_base.stl?v=' + Date.now(), geo => {
+    geo.computeVertexNormals();
+    geo.rotateX(-Math.PI/2);
+    const b1 = new THREE.Box3().setFromObject(new THREE.Mesh(geo));
+    const c1 = new THREE.Vector3(); b1.getCenter(c1);
+    geo.translate(-c1.x, -b1.min.y, -c1.z); 
+
+    // Lật lại cho đúng chiều thực tế (Vách gá motor hướng xuống đất)
+    // Đoạn code này được tính toán chuẩn cho file SCAD V3.4 (lật gầm) mới nhất.
+    geo.rotateX(Math.PI);
+    const b2 = new THREE.Box3().setFromObject(new THREE.Mesh(geo));
+    geo.translate(0, -b2.min.y, 0); 
+    
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x34d399, roughness: 0.4, metalness: 0.05 }));
+    // Nâng lên để khớp trục motor tại Y=32.5
+    // Tính toán chuẩn: Offset Y là 18.5mm
+    m.position.y = 18.5;
+    m.castShadow = m.receiveShadow = true;
+    asm.add(m); check();
+  }, null, err => console.error('base:', err));
+
+  // ── Load Top Plate (Tầng 2) ──
+  loader.load('prototype_top.stl?v=' + Date.now(), geo => {
+    geo.computeVertexNormals();
+    geo.rotateX(-Math.PI/2);
+    const b = new THREE.Box3().setFromObject(new THREE.Mesh(geo));
+    const c = new THREE.Vector3(); b.getCenter(c);
+    geo.translate(-c.x, -b.min.y, -c.z);
+    
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: 0x4f8ef7, roughness: 0.4, transparent: true, opacity: 0.82
+    }));
+    // Mặt đáy của Top Plate ở Y=110.5
+    m.position.y = 110.5;
+    m.castShadow = m.receiveShadow = true;
+    asm.add(m); check();
+  }, null, err => console.error('top:', err));
+
+  // ── Load Bumper (Cản trước) ──
+  loader.load('prototype_bumper.stl?v=' + Date.now(), geo => {
+    geo.computeVertexNormals();
+    geo.rotateX(-Math.PI/2);
+    const b = new THREE.Box3().setFromObject(new THREE.Mesh(geo));
+    const c = new THREE.Vector3(); b.getCenter(c);
+    // Đưa tâm về (0,0,0), mặt đáy ở y=0
+    geo.translate(-c.x, -b.min.y, -c.z);
+    
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: 0x1f2937, roughness: 0.6, metalness: 0.2 // Dark grey
+    }));
+    // Bumper tâm X SCAD = 210. Base Plate tâm X = 100. Offset X = 110.
+    m.position.x = 110;
+    // Bumper gắn vào đáy Base Plate (y=50.5). Chiều cao ngàm SCAD = 5mm. -> Đáy = 45.5
+    m.position.y = 45.5;
+    m.castShadow = m.receiveShadow = true;
+    asm.add(m); check();
+  }, null, err => console.error('bumper:', err));
+};
+
+
+
+// ── Controls ──
+window.setColor = function(hex, btn) {
+  document.querySelectorAll('.clr-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  activeColor = hex;
+  if (mesh) mesh.material.color.setHex(hex);
+};
+
+window.toggleGrid = function() {
+  showGrid = !showGrid; grid.visible = showGrid;
+  document.getElementById('tgrid').classList.toggle('on', showGrid);
+};
+
+window.toggleWire = function() {
+  showWire = !showWire;
+  if (wireMesh) wireMesh.visible = showWire;
+  document.getElementById('twire').classList.toggle('on', showWire);
+};
+
+window.toggleFlat = function() {
+  showFlat = !showFlat;
+  if (mesh) { mesh.material.flatShading = showFlat; mesh.material.needsUpdate = true; }
+  document.getElementById('tflat').classList.toggle('on', showFlat);
+};
+
+window.resetCam = function() {
+  camera.position.set(300, 250, 400); controls.target.set(0, 50, 0); controls.update();
+};
+
+// ── Render loop ──
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+// ── Auto load ──
+setTimeout(() => loadSTL('prototype_base.stl', 'Tầng 1 — Base Plate', 'Gá Motor + Caster + Lỗ trụ đồng', '200×190×5 mm', 0x34d399, null), 200);
+</script>
+</body>
+</html>
