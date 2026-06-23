@@ -4,10 +4,10 @@
   Package: restaurant_robot_description
   Description: Mechanical structure of the restaurant service robot.
                Matches the reference design:
-                 - Rectangular chassis: 300 x 300 x 150 mm
-                 - 2 rear drive wheels: 100mm diameter, 40mm wide, 350mm separation
-                 - 1 front caster wheel: 50mm diameter
-                 - chassis_joint origin at (-0.1, 0, 0)
+                 - Rectangular chassis: 200 x 190 x 70 mm
+                 - 2 rear drive wheels: 65mm diameter, 26mm wide, 220mm separation
+                 - 1 front caster wheel: 33mm diameter
+                 - chassis_joint origin at (-0.067, 0, 0)
                 
   Coordinate Convention (ROS standard):
     X = forward, Y = left, Z = up

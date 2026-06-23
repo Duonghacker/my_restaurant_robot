@@ -92,9 +92,9 @@ ros2 run tf2_tools view_frames
 
 | Thành phần | Thông số |
 |---|---|
-| Chassis | Hình trụ Ø20cm, cao 15cm/tầng, 2 tầng |
-| Khối lượng | 2.0 kg |
+| Chassis | Hình hộp 200 x 190 x 70 mm |
+| Khối lượng | ~0.8 kg (tổng theo URDF) |
 | Bánh xe | Ø65mm, dày 26mm, GA25 motor |
-| Wheel separation | 170mm |
-| Caster | Ø30mm, phía trước |
+| Wheel separation | 220mm |
+| Caster | Ø33mm, phía trước |
 | Lidar | RPLidar A1, 360°, 0.15-12m |
